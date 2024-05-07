@@ -1,19 +1,22 @@
-package main
+package chip8
 
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"fmt"
 	"math"
 	"time"
 )
 
 const (
-	flagRegisterIndex = 15
-	executionRateHz   = 700
-	timerRateHz       = 60
+	flagRegisterIndex       = 15
+	memoryStartIndexForFont = 0x50
+	memoryStartIndexForGame = 0x200
+	displayWidth            = 64
+	displayHeight           = 32
 )
 
-var font = [...]byte{
+var font = [80]byte{
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 	0x20, 0x60, 0x20, 0x20, 0x70, // 1
 	0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -52,60 +55,47 @@ var keysToIndexMap map[rune]uint = map[rune]uint{
 }
 
 type Chip struct {
-	memory           []byte
+	memory           [4096]byte
 	programCounter   uint16
 	indexRegister    uint16
 	stack            [16]uint16
-	stackPointer     uint16
+	stackPointer     int
 	delayTimerValue  uint8
 	soundTimerValue  uint8
 	generalRegisters [16]byte
-	display          [64][32]bool
-	key              [16]bool
+	display          [displayWidth][displayHeight]bool
+	keys             [16]bool
+	cycleSleepTime   time.Duration
 }
 
-func (chip *Chip) Run(filePath string) {
-	chip.loadGameIntoMemory(filePath)
-	chip.loadFontIntoMemory()
-
-	/* Note that the tickers are unnecessary when their corresponding values
-	are 0, and thus can sometimes be wasteful. However, since they only
-	tick at a rate of 60Hz, this is a fine tradeoff for now. A better
-	solution may be to pause the ticker when its corresponding value is 0. */
-	delayTicker := time.NewTicker(time.Second / timerRateHz)
-	soundTicker := time.NewTicker(time.Second / timerRateHz)
-
-	for {
-		select {
-		case <-delayTicker.C:
-			if chip.delayTimerValue != 0 {
-				chip.delayTimerValue--
-			}
-			chip.executeCycle()
-		case <-soundTicker.C:
-			if chip.soundTimerValue != 0 {
-				chip.soundTimerValue--
-			}
-			chip.executeCycle()
-		default:
-			chip.executeCycle()
-		}
+func NewChip(fileBytes []byte, cycleSleepTime time.Duration) *Chip {
+	chip := Chip{
+		programCounter: 0x200,
+		cycleSleepTime: cycleSleepTime,
 	}
+	chip.loadGameIntoMemory(fileBytes)
+	chip.loadFontIntoMemory()
+	return &chip
 }
 
-func (chip *Chip) executeCycle() {
+func (chip *Chip) ExecuteCycle() bool {
 	instruction := chip.fetchInstruction()
-	chip.executeInstruction(instruction)
-	time.Sleep(time.Second / executionRateHz)
+	screenUpdated := chip.executeInstruction(instruction)
+	time.Sleep(chip.cycleSleepTime)
+	return screenUpdated
 }
 
 func (chip *Chip) fetchInstruction() uint16 {
+	if chip.programCounter+1 > uint16(len(chip.memory)) {
+		panic("Instruction is out of bounds")
+	}
 	currInstruction := binary.BigEndian.Uint16(chip.memory[chip.programCounter : chip.programCounter+2])
 	chip.programCounter += 2
 	return currInstruction
 }
 
-func (chip *Chip) executeInstruction(instruction uint16) {
+func (chip *Chip) executeInstruction(instruction uint16) bool {
+	screenUpdated := false
 	firstHexit := (instruction >> 12) & 0xF
 	secondHexit := (instruction >> 8) & 0xF
 	thirdHexit := (instruction >> 4) & 0xF
@@ -117,17 +107,31 @@ func (chip *Chip) executeInstruction(instruction uint16) {
 	case 0x0:
 		switch instruction {
 		case 0x00E0:
-			// TODO
-			// Clear screen
+			for i, v := range chip.display {
+				for j := range v {
+					chip.display[i][j] = false
+				}
+			}
+			screenUpdated = true
 		case 0x00EE:
-			// TODO Return from subroutine
+			chip.stackPointer--
+			if chip.stackPointer < 0 {
+				panic("Returning from main routine")
+			}
+			chip.programCounter = chip.stack[chip.stackPointer]
 		default:
-			// TODO Calls machine code routine
+			panic(fmt.Sprintf("Cannot recognize instruction: %d", instruction))
 		}
 	case 0x1:
-		// TODO jump to address
+		chip.programCounter = last12BitsOfInstruction
 	case 0x2:
-		// TODO calls routine
+		if chip.stackPointer > 15 {
+			panic("Stack limit of 16 reached")
+		} else {
+			chip.stack[chip.stackPointer] = chip.programCounter
+			chip.programCounter = last12BitsOfInstruction
+			chip.stackPointer++
+		}
 	case 0x3:
 		registerValue := chip.generalRegisters[secondHexit]
 		if registerValue == byte(secondByteOfInstruction) {
@@ -212,7 +216,34 @@ func (chip *Chip) executeInstruction(instruction uint16) {
 		}
 		chip.generalRegisters[secondHexit] = secondByteOfInstruction & randomByteSlice[0]
 	case 0xD:
-		// TODO draw
+		height := fourthHexit
+		startingX := chip.generalRegisters[secondHexit] % displayWidth
+		startingY := chip.generalRegisters[thirdHexit] % displayHeight
+		for j := byte(0); j < byte(height); j++ {
+			currByte := chip.memory[chip.indexRegister+uint16(j)]
+			currentY := startingY + j
+			if currentY >= displayHeight {
+				break
+			}
+			for i := byte(0); i < 8; i++ {
+				currX := startingX + i
+				if currX >= displayWidth {
+					break
+				}
+				currPixel := chip.display[currX][currentY]
+				var newPixel bool
+				if ((currByte >> (8 - i - 1)) & 1) == 1 {
+					newPixel = true
+				} else {
+					newPixel = false
+				}
+				if currPixel && newPixel {
+					chip.generalRegisters[flagRegisterIndex] = 1
+				}
+				chip.display[currX][currentY] = currPixel != newPixel
+			}
+		}
+		screenUpdated = true
 	case 0xE:
 		key := chip.generalRegisters[secondHexit]
 		switch secondByteOfInstruction {
@@ -247,34 +278,54 @@ func (chip *Chip) executeInstruction(instruction uint16) {
 			onesDigit := (registerValue / 1) % 10
 
 			chip.memory[chip.indexRegister] = hundredsDigit
-			chip.memory[chip.indexRegister + 1] = tensDigit
-			chip.memory[chip.indexRegister + 2] = onesDigit
+			chip.memory[chip.indexRegister+1] = tensDigit
+			chip.memory[chip.indexRegister+2] = onesDigit
 		case 0x55:
 			chip.dumpRegisters(secondHexit)
 		case 0x65:
 			chip.loadRegisters(secondHexit)
 		}
 	}
+	return screenUpdated
 }
 
 func (chip *Chip) dumpRegisters(finalRegisterIndex uint16) {
 	for i := 0; i <= int(finalRegisterIndex); i++ {
-		chip.memory[int(chip.indexRegister) + i] = chip.generalRegisters[i]
+		chip.memory[int(chip.indexRegister)+i] = chip.generalRegisters[i]
 	}
 }
 
 func (chip *Chip) loadRegisters(finalRegisterIndex uint16) {
 	for i := 0; i <= int(finalRegisterIndex); i++ {
-		chip.generalRegisters[i] = chip.memory[int(chip.indexRegister) + i]
+		chip.generalRegisters[i] = chip.memory[int(chip.indexRegister)+i]
 	}
 }
 
+func (chip *Chip) DecrementDelayTimer() {
+	if chip.delayTimerValue != 0 {
+		chip.delayTimerValue--
+	}
+}
+
+func (chip *Chip) DecrementSoundTimer() {
+	if chip.soundTimerValue != 0 {
+		chip.soundTimerValue--
+	}
+}
 
 func keyPressed(key byte) bool {
 	// TODO
 	return true
 }
 
-func (chip *Chip) loadGameIntoMemory(filePath string) {}
+func (chip *Chip) SetKeys(keyState [16]bool) {
+	chip.keys = keyState
+}
 
-func (chip *Chip) loadFontIntoMemory() {}
+func (chip *Chip) loadGameIntoMemory(fileBytes []byte) {
+	copy(chip.memory[memoryStartIndexForGame:memoryStartIndexForGame+len(fileBytes)], fileBytes)
+}
+
+func (chip *Chip) loadFontIntoMemory() {
+	copy(chip.memory[memoryStartIndexForFont:memoryStartIndexForFont+len(font)], font[:])
+}
