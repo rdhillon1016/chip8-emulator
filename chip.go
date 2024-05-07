@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/binary"
 	"math"
 	"time"
@@ -116,30 +117,31 @@ func (chip *Chip) executeInstruction(instruction uint16) {
 	case 0x0:
 		switch instruction {
 		case 0x00E0:
+			// TODO
 			// Clear screen
 		case 0x00EE:
-			// Return from subroutine
+			// TODO Return from subroutine
 		default:
-			// Calls machine code routine
+			// TODO Calls machine code routine
 		}
 	case 0x1:
-		// jump to address
+		// TODO jump to address
 	case 0x2:
-		// calls routine
+		// TODO calls routine
 	case 0x3:
 		registerValue := chip.generalRegisters[secondHexit]
-		if (registerValue == byte(secondByteOfInstruction)) {
+		if registerValue == byte(secondByteOfInstruction) {
 			chip.programCounter += 2
 		}
 	case 0x4:
 		registerValue := chip.generalRegisters[secondHexit]
-		if (registerValue != byte(secondByteOfInstruction)) {
+		if registerValue != byte(secondByteOfInstruction) {
 			chip.programCounter += 2
 		}
 	case 0x5:
 		registerValueOne := chip.generalRegisters[secondHexit]
 		registerValueTwo := chip.generalRegisters[thirdHexit]
-		if (registerValueOne == registerValueTwo) {
+		if registerValueOne == registerValueTwo {
 			chip.programCounter += 2
 		}
 	case 0x6:
@@ -147,7 +149,7 @@ func (chip *Chip) executeInstruction(instruction uint16) {
 	case 0x7:
 		chip.generalRegisters[secondHexit] += byte(secondByteOfInstruction)
 	case 0x8:
-		switch (fourthHexit) {
+		switch fourthHexit {
 		case 0x0:
 			chip.generalRegisters[secondHexit] = chip.generalRegisters[thirdHexit]
 		case 0x1:
@@ -159,7 +161,7 @@ func (chip *Chip) executeInstruction(instruction uint16) {
 		case 0x4:
 			registerValueOne := chip.generalRegisters[secondHexit]
 			registerValueTwo := chip.generalRegisters[thirdHexit]
-			if (registerValueOne > math.MaxUint8 - registerValueTwo) {
+			if registerValueOne > math.MaxUint8-registerValueTwo {
 				chip.generalRegisters[flagRegisterIndex] = 1
 			} else {
 				chip.generalRegisters[flagRegisterIndex] = 0
@@ -168,7 +170,7 @@ func (chip *Chip) executeInstruction(instruction uint16) {
 		case 0x5:
 			registerValueOne := chip.generalRegisters[secondHexit]
 			registerValueTwo := chip.generalRegisters[thirdHexit]
-			if (registerValueOne >= registerValueTwo) {
+			if registerValueOne >= registerValueTwo {
 				chip.generalRegisters[flagRegisterIndex] = 1
 			} else {
 				chip.generalRegisters[flagRegisterIndex] = 0
@@ -181,7 +183,7 @@ func (chip *Chip) executeInstruction(instruction uint16) {
 		case 0x7:
 			registerValueOne := chip.generalRegisters[secondHexit]
 			registerValueTwo := chip.generalRegisters[thirdHexit]
-			if (registerValueTwo >= registerValueOne) {
+			if registerValueTwo >= registerValueOne {
 				chip.generalRegisters[flagRegisterIndex] = 1
 			} else {
 				chip.generalRegisters[flagRegisterIndex] = 0
@@ -195,7 +197,7 @@ func (chip *Chip) executeInstruction(instruction uint16) {
 	case 0x9:
 		registerValueOne := chip.generalRegisters[secondHexit]
 		registerValueTwo := chip.generalRegisters[thirdHexit]
-		if (registerValueOne != registerValueTwo) {
+		if registerValueOne != registerValueTwo {
 			chip.programCounter += 2
 		}
 	case 0xA:
@@ -203,11 +205,74 @@ func (chip *Chip) executeInstruction(instruction uint16) {
 	case 0xB:
 		chip.programCounter = uint16(chip.generalRegisters[0]) + last12BitsOfInstruction
 	case 0xC:
-		
+		randomByteSlice := make([]byte, 1)
+		_, err := rand.Read(randomByteSlice)
+		if err != nil {
+			panic("Random number generation failed")
+		}
+		chip.generalRegisters[secondHexit] = secondByteOfInstruction & randomByteSlice[0]
 	case 0xD:
+		// TODO draw
 	case 0xE:
+		key := chip.generalRegisters[secondHexit]
+		switch secondByteOfInstruction {
+		case 0x9E:
+			if keyPressed(key) {
+				chip.programCounter += 2
+			}
+		case 0xA1:
+			if !keyPressed(key) {
+				chip.programCounter += 2
+			}
+		}
 	case 0xF:
+		switch secondByteOfInstruction {
+		case 0x07:
+			chip.generalRegisters[secondHexit] = chip.delayTimerValue
+		case 0x0A:
+			// wait for key press
+		case 0x15:
+			chip.delayTimerValue = chip.generalRegisters[secondHexit]
+		case 0x18:
+			chip.soundTimerValue = chip.generalRegisters[secondHexit]
+		case 0x1E:
+			chip.indexRegister += uint16(chip.generalRegisters[secondHexit])
+		case 0x29:
+			// something to do with sprites
+		case 0x33:
+			registerValue := chip.generalRegisters[secondHexit]
+
+			hundredsDigit := (registerValue / 100) % 10
+			tensDigit := (registerValue / 10) % 10
+			onesDigit := (registerValue / 1) % 10
+
+			chip.memory[chip.indexRegister] = hundredsDigit
+			chip.memory[chip.indexRegister + 1] = tensDigit
+			chip.memory[chip.indexRegister + 2] = onesDigit
+		case 0x55:
+			chip.dumpRegisters(secondHexit)
+		case 0x65:
+			chip.loadRegisters(secondHexit)
+		}
 	}
+}
+
+func (chip *Chip) dumpRegisters(finalRegisterIndex uint16) {
+	for i := 0; i <= int(finalRegisterIndex); i++ {
+		chip.memory[int(chip.indexRegister) + i] = chip.generalRegisters[i]
+	}
+}
+
+func (chip *Chip) loadRegisters(finalRegisterIndex uint16) {
+	for i := 0; i <= int(finalRegisterIndex); i++ {
+		chip.generalRegisters[i] = chip.memory[int(chip.indexRegister) + i]
+	}
+}
+
+
+func keyPressed(key byte) bool {
+	// TODO
+	return true
 }
 
 func (chip *Chip) loadGameIntoMemory(filePath string) {}
