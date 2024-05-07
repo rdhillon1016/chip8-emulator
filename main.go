@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/rdhillon1016/chip8-emulator/chip8"
+	"github.com/rdhillon1016/chip8-emulator/io"
 )
 
 const (
@@ -19,7 +20,7 @@ func main() {
 	if err != nil {
 		panic("Unable to read game file")
 	}
-	chip := chip8.NewChip(fileBytes, time.Second / executionRateHz)
+	chip := chip8.NewChip(fileBytes)
 	
 	/* Note that the tickers are unnecessary when their corresponding values
 	are 0, and thus can sometimes be wasteful. However, since they only
@@ -29,6 +30,7 @@ func main() {
 	soundTicker := time.NewTicker(time.Second / timerRateHz)
 
 	for {
+		chip.SetKeys(io.GetKeyPresses())
 		select {
 		case <-delayTicker.C:
 			chip.DecrementDelayTimer()
@@ -37,7 +39,14 @@ func main() {
 			chip.DecrementSoundTimer()
 			chip.ExecuteCycle()
 		default:
-			chip.ExecuteCycle()
 		}
+		screenUpdated := chip.ExecuteCycle()
+		if screenUpdated {
+			io.UpdateScreen()
+		}
+		if chip.SoundTimerValue > 0 {
+			io.Beep()
+		}
+		time.Sleep(time.Second / executionRateHz)
 	}
 }

@@ -9,7 +9,7 @@ const (
 func TestFetchOutOfBoundsInstruction(t *testing.T) {
 	defer func() { _ = recover() }()
 
-	chip := NewChip([]byte{0x00E0}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x00E0})
 	chip.programCounter = 4095
 	chip.ExecuteCycle()
 
@@ -17,7 +17,7 @@ func TestFetchOutOfBoundsInstruction(t *testing.T) {
 }
 
 func Test00E0(t *testing.T) {
-	chip := NewChip([]byte{0x00, 0xE0}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x00, 0xE0})
 	var expectedDisplay [64][32]bool
 	for i, v := range chip.display {
 		for j := range v {
@@ -37,7 +37,7 @@ func Test00E0(t *testing.T) {
 }
 
 func Test00EE(t *testing.T) {
-	chip := NewChip([]byte{0x22, 0x02, 0x00, 0xEE}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x22, 0x02, 0x00, 0xEE})
 	chip.ExecuteCycle()
 	chip.ExecuteCycle()
 
@@ -47,7 +47,7 @@ func Test00EE(t *testing.T) {
 }
 
 func Test1NNN(t *testing.T) {
-	chip := NewChip([]byte{0x1E, 0xEE}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x1E, 0xEE})
 	chip.ExecuteCycle()
 
 	if chip.programCounter != 0xEEE {
@@ -56,7 +56,7 @@ func Test1NNN(t *testing.T) {
 }
 
 func Test2NNN(t *testing.T) {
-	chip := NewChip([]byte{0x2E, 0xEE}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x2E, 0xEE})
 	originalProgramCounter := chip.programCounter
 	chip.ExecuteCycle()
 
@@ -66,7 +66,7 @@ func Test2NNN(t *testing.T) {
 }
 
 func Test3XNN(t *testing.T) {
-	chip := NewChip([]byte{0x31, 0x45, 0x00, 0x00, 0x31, 0x46}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x31, 0x45, 0x00, 0x00, 0x31, 0x46})
 	chip.generalRegisters[1] = 0x45
 	chip.ExecuteCycle()
 
@@ -82,7 +82,7 @@ func Test3XNN(t *testing.T) {
 }
 
 func Test4XNN(t *testing.T) {
-	chip := NewChip([]byte{0x41, 0x46, 0x00, 0x00, 0x41, 0x45}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x41, 0x46, 0x00, 0x00, 0x41, 0x45})
 	chip.generalRegisters[1] = 0x45
 	chip.ExecuteCycle()
 
@@ -98,7 +98,7 @@ func Test4XNN(t *testing.T) {
 }
 
 func Test5XY0(t *testing.T) {
-	chip := NewChip([]byte{0x50, 0x10, 0x00, 0x00, 0x50, 0x20}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x50, 0x10, 0x00, 0x00, 0x50, 0x20})
 	chip.generalRegisters[0] = 0x45
 	chip.generalRegisters[1] = 0x45
 	chip.ExecuteCycle()
@@ -115,7 +115,7 @@ func Test5XY0(t *testing.T) {
 }
 
 func Test6XNN(t *testing.T) {
-	chip := NewChip([]byte{0x60, 0x11}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x60, 0x11})
 	chip.ExecuteCycle()
 
 	if chip.generalRegisters[0] != 0x11 {
@@ -124,7 +124,7 @@ func Test6XNN(t *testing.T) {
 }
 
 func Test7XNN(t *testing.T) {
-	chip := NewChip([]byte{0x70, 0xEE, 0x70, 0xEE}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x70, 0xEE, 0x70, 0xEE})
 	chip.ExecuteCycle()
 
 	if chip.generalRegisters[0] != 0xEE || chip.generalRegisters[flagRegisterIndex] == 1 {
@@ -139,7 +139,7 @@ func Test7XNN(t *testing.T) {
 }
 
 func Test8XY0(t *testing.T) {
-	chip := NewChip([]byte{0x80, 0x10}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x80, 0x10})
 	chip.generalRegisters[1] = 0xEE
 	chip.ExecuteCycle()
 
@@ -149,7 +149,7 @@ func Test8XY0(t *testing.T) {
 }
 
 func Test8XY1(t *testing.T) {
-	chip := NewChip([]byte{0x80, 0x11}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x80, 0x11})
 	chip.generalRegisters[1] = 0xEE
 	chip.ExecuteCycle()
 
@@ -159,7 +159,7 @@ func Test8XY1(t *testing.T) {
 }
 
 func Test8XY2(t *testing.T) {
-	chip := NewChip([]byte{0x80, 0x12}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x80, 0x12})
 	chip.generalRegisters[1] = 0xEE
 	chip.ExecuteCycle()
 
@@ -169,7 +169,7 @@ func Test8XY2(t *testing.T) {
 }
 
 func Test8XY3(t *testing.T) {
-	chip := NewChip([]byte{0x80, 0x13}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x80, 0x13})
 	chip.generalRegisters[1] = 0xEE
 	chip.ExecuteCycle()
 
@@ -179,7 +179,7 @@ func Test8XY3(t *testing.T) {
 }
 
 func Test8XY4(t *testing.T) {
-	chip := NewChip([]byte{0x80, 0x14, 0x80, 0x14}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x80, 0x14, 0x80, 0x14})
 	chip.generalRegisters[1] = 0xEE
 	chip.ExecuteCycle()
 
@@ -195,7 +195,7 @@ func Test8XY4(t *testing.T) {
 }
 
 func Test8XY5(t *testing.T) {
-	chip := NewChip([]byte{0x80, 0x15, 0x80, 0x25}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x80, 0x15, 0x80, 0x25})
 	chip.generalRegisters[1] = 0xEE
 	chip.ExecuteCycle()
 
@@ -211,7 +211,7 @@ func Test8XY5(t *testing.T) {
 }
 
 func Test8XY6(t *testing.T) {
-	chip := NewChip([]byte{0x80, 0x16}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x80, 0x16})
 	chip.generalRegisters[0] = 0x3
 	chip.ExecuteCycle()
 
@@ -221,7 +221,7 @@ func Test8XY6(t *testing.T) {
 }
 
 func Test8XY7(t *testing.T) {
-	chip := NewChip([]byte{0x80, 0x17, 0x82, 0x17}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x80, 0x17, 0x82, 0x17})
 	chip.generalRegisters[0] = 0xEE
 	chip.ExecuteCycle()
 
@@ -237,7 +237,7 @@ func Test8XY7(t *testing.T) {
 }
 
 func Test8XYE(t *testing.T) {
-	chip := NewChip([]byte{0x80, 0x1E}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x80, 0x1E})
 	chip.generalRegisters[0] = 0x81
 	chip.ExecuteCycle()
 
@@ -247,7 +247,7 @@ func Test8XYE(t *testing.T) {
 }
 
 func Test9XY0(t *testing.T) {
-	chip := NewChip([]byte{0x90, 0x20, 0x00, 0x00, 0x90, 0x10}, testingCycleSleepTime)
+	chip := NewChip([]byte{0x90, 0x20, 0x00, 0x00, 0x90, 0x10})
 	chip.generalRegisters[0] = 0x45
 	chip.generalRegisters[1] = 0x45
 	chip.ExecuteCycle()
@@ -264,7 +264,7 @@ func Test9XY0(t *testing.T) {
 }
 
 func TestANNN(t *testing.T) {
-	chip := NewChip([]byte{0xAE, 0xEE}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xAE, 0xEE})
 	chip.ExecuteCycle()
 
 	if chip.indexRegister != 0xEEE {
@@ -273,7 +273,7 @@ func TestANNN(t *testing.T) {
 }
 
 func TestBNNN(t *testing.T) {
-	chip := NewChip([]byte{0xBE, 0xED}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xBE, 0xED})
 	chip.generalRegisters[0] = 0x1
 	chip.ExecuteCycle()
 
@@ -283,7 +283,7 @@ func TestBNNN(t *testing.T) {
 }
 
 func TestDXYN(t *testing.T) {
-	chip := NewChip([]byte{0xD0, 0x15}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xD0, 0x15})
 	xCord := byte(3)
 	yCord := byte(4)
 
@@ -316,7 +316,7 @@ func TestDXYN(t *testing.T) {
 }
 
 func TestDXYNWrap(t *testing.T) {
-	chip := NewChip([]byte{0xD0, 0x11}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xD0, 0x11})
 	xCord := byte(64)
 	yCord := byte(32)
 
@@ -334,7 +334,7 @@ func TestDXYNWrap(t *testing.T) {
 }
 
 func TestDXYNTruncate(t *testing.T) {
-	chip := NewChip([]byte{0xD0, 0x11}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xD0, 0x11})
 	xCord := byte(63)
 	yCord := byte(31)
 
@@ -360,7 +360,7 @@ func TestDXYNTruncate(t *testing.T) {
 }
 
 func TestEX9E(t *testing.T) {
-	chip := NewChip([]byte{0xE0, 0x9E, 0x00, 0x00, 0xE1, 0x9E}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xE0, 0x9E, 0x00, 0x00, 0xE1, 0x9E})
 	chip.keys[0] = true
 	chip.generalRegisters[1] = 1
 	chip.ExecuteCycle()
@@ -377,7 +377,7 @@ func TestEX9E(t *testing.T) {
 }
 
 func TestEXA1(t *testing.T) {
-	chip := NewChip([]byte{0xE0, 0xA1, 0x00, 0x00, 0xE1, 0xA1}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xE0, 0xA1, 0x00, 0x00, 0xE1, 0xA1})
 	chip.keys[1] = true
 	chip.generalRegisters[1] = 1
 	chip.ExecuteCycle()
@@ -394,7 +394,7 @@ func TestEXA1(t *testing.T) {
 }
 
 func TestFX07(t *testing.T) {
-	chip := NewChip([]byte{0xF0, 0x07}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xF0, 0x07})
 	chip.delayTimerValue = 5
 	chip.ExecuteCycle()
 
@@ -404,7 +404,7 @@ func TestFX07(t *testing.T) {
 }
 
 func TestFX0A(t *testing.T) {
-	chip := NewChip([]byte{0xF0, 0x0A}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xF0, 0x0A})
 	chip.ExecuteCycle()
 
 	if chip.programCounter != 0x200 {
@@ -420,7 +420,7 @@ func TestFX0A(t *testing.T) {
 }
 
 func TestFX15(t *testing.T) {
-	chip := NewChip([]byte{0xF0, 0x15}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xF0, 0x15})
 	chip.generalRegisters[0] = 5
 	chip.ExecuteCycle()
 
@@ -430,17 +430,17 @@ func TestFX15(t *testing.T) {
 }
 
 func TestFX18(t *testing.T) {
-	chip := NewChip([]byte{0xF0, 0x18}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xF0, 0x18})
 	chip.generalRegisters[0] = 5
 	chip.ExecuteCycle()
 
-	if chip.soundTimerValue != 5 {
+	if chip.SoundTimerValue != 5 {
 		t.Error("Register to sound timer value failed")
 	}
 }
 
 func TestFX1E(t *testing.T) {
-	chip := NewChip([]byte{0xF0, 0x1E}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xF0, 0x1E})
 	chip.indexRegister = 0xFF
 	chip.generalRegisters[0] = 0xFF
 	chip.ExecuteCycle()
@@ -451,7 +451,7 @@ func TestFX1E(t *testing.T) {
 }
 
 func TestFX29(t *testing.T) {
-	chip := NewChip([]byte{0xF0, 0x29}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xF0, 0x29})
 	chip.generalRegisters[0] = 0x2
 	chip.ExecuteCycle()
 
@@ -461,7 +461,7 @@ func TestFX29(t *testing.T) {
 }
 
 func TestFX33(t *testing.T) {
-	chip := NewChip([]byte{0xF0, 0x33}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xF0, 0x33})
 	chip.generalRegisters[0] = 173
 	chip.indexRegister = 0x202
 	chip.ExecuteCycle()
@@ -472,7 +472,7 @@ func TestFX33(t *testing.T) {
 }
 
 func TestFX55(t *testing.T) {
-	chip := NewChip([]byte{0xF5, 0x55}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xF5, 0x55})
 	for i := range chip.generalRegisters {
 		chip.generalRegisters[i] = 0xDE
 	}
@@ -496,7 +496,7 @@ func TestFX55(t *testing.T) {
 }
 
 func TestFX65(t *testing.T) {
-	chip := NewChip([]byte{0xF5, 0x65}, testingCycleSleepTime)
+	chip := NewChip([]byte{0xF5, 0x65})
 	chip.indexRegister = 0x202
 	for i := 0; i < 6; i++ {
 		chip.memory[chip.indexRegister + uint16(i)] = 0xDE

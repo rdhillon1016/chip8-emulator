@@ -1,0 +1,25 @@
+package io
+
+var keysToIndexMap map[rune]uint = map[rune]uint{
+	'X': 0x0,
+	'1': 0x1,
+	'2': 0x2,
+	'3': 0x3,
+	'Q': 0x4,
+	'W': 0x5,
+	'E': 0x6,
+	'A': 0x7,
+	'S': 0x8,
+	'D': 0x9,
+	'Z': 0xA,
+	'C': 0xB,
+	'4': 0xC,
+	'R': 0xD,
+	'F': 0xE,
+	'V': 0xF,
+}
+
+func GetKeyPresses() [16]bool {
+	var keyPresses [16]bool
+	return keyPresses
+}

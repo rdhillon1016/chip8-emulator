@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"math"
-	"time"
 )
 
 const (
@@ -34,25 +33,6 @@ var font = [80]byte{
 	0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 }
 
-var keysToIndexMap map[rune]uint = map[rune]uint{
-	'X': 0x0,
-	'1': 0x1,
-	'2': 0x2,
-	'3': 0x3,
-	'Q': 0x4,
-	'W': 0x5,
-	'E': 0x6,
-	'A': 0x7,
-	'S': 0x8,
-	'D': 0x9,
-	'Z': 0xA,
-	'C': 0xB,
-	'4': 0xC,
-	'R': 0xD,
-	'F': 0xE,
-	'V': 0xF,
-}
-
 type Chip struct {
 	memory           [4096]byte
 	programCounter   uint16
@@ -60,17 +40,15 @@ type Chip struct {
 	stack            [16]uint16
 	stackPointer     int
 	delayTimerValue  uint8
-	soundTimerValue  uint8
+	SoundTimerValue  uint8
 	generalRegisters [16]byte
 	display          [displayWidth][displayHeight]bool
 	keys             [16]bool
-	cycleSleepTime   time.Duration
 }
 
-func NewChip(fileBytes []byte, cycleSleepTime time.Duration) *Chip {
+func NewChip(fileBytes []byte) *Chip {
 	chip := Chip{
 		programCounter: 0x200,
-		cycleSleepTime: cycleSleepTime,
 	}
 	chip.loadGameIntoMemory(fileBytes)
 	chip.loadFontIntoMemory()
@@ -80,7 +58,6 @@ func NewChip(fileBytes []byte, cycleSleepTime time.Duration) *Chip {
 func (chip *Chip) ExecuteCycle() bool {
 	instruction := chip.fetchInstruction()
 	screenUpdated := chip.executeInstruction(instruction)
-	time.Sleep(chip.cycleSleepTime)
 	return screenUpdated
 }
 
@@ -269,7 +246,7 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 		case 0x15:
 			chip.delayTimerValue = chip.generalRegisters[secondHexit]
 		case 0x18:
-			chip.soundTimerValue = chip.generalRegisters[secondHexit]
+			chip.SoundTimerValue = chip.generalRegisters[secondHexit]
 		case 0x1E:
 			chip.indexRegister += uint16(chip.generalRegisters[secondHexit])
 		case 0x29:
@@ -314,8 +291,8 @@ func (chip *Chip) DecrementDelayTimer() {
 }
 
 func (chip *Chip) DecrementSoundTimer() {
-	if chip.soundTimerValue != 0 {
-		chip.soundTimerValue--
+	if chip.SoundTimerValue != 0 {
+		chip.SoundTimerValue--
 	}
 }
 
