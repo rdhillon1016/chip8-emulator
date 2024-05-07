@@ -358,3 +358,159 @@ func TestDXYNTruncate(t *testing.T) {
 		t.Error("Pixels were set that shouldn't have been")
 	}
 }
+
+func TestEX9E(t *testing.T) {
+	chip := NewChip([]byte{0xE0, 0x9E, 0x00, 0x00, 0xE1, 0x9E}, testingCycleSleepTime)
+	chip.keys[0] = true
+	chip.generalRegisters[1] = 1
+	chip.ExecuteCycle()
+
+	if chip.programCounter != 0x204 {
+		t.Error("Skip failed")
+	}
+
+	chip.ExecuteCycle()
+
+	if chip.programCounter != 0x206 {
+		t.Error("PC increment failed")
+	}
+}
+
+func TestEXA1(t *testing.T) {
+	chip := NewChip([]byte{0xE0, 0xA1, 0x00, 0x00, 0xE1, 0xA1}, testingCycleSleepTime)
+	chip.keys[1] = true
+	chip.generalRegisters[1] = 1
+	chip.ExecuteCycle()
+
+	if chip.programCounter != 0x204 {
+		t.Error("Skip failed")
+	}
+
+	chip.ExecuteCycle()
+
+	if chip.programCounter != 0x206 {
+		t.Error("PC increment failed")
+	}
+}
+
+func TestFX07(t *testing.T) {
+	chip := NewChip([]byte{0xF0, 0x07}, testingCycleSleepTime)
+	chip.delayTimerValue = 5
+	chip.ExecuteCycle()
+
+	if chip.generalRegisters[0] != 5 {
+		t.Error("Timer value to register failed")
+	}
+}
+
+func TestFX0A(t *testing.T) {
+	chip := NewChip([]byte{0xF0, 0x0A}, testingCycleSleepTime)
+	chip.ExecuteCycle()
+
+	if chip.programCounter != 0x200 {
+		t.Error("Program did not halt while waiting for key press")
+	}
+
+	chip.keys[5] = true
+	chip.ExecuteCycle()
+
+	if chip.programCounter != 0x202 {
+		t.Error("Program did not continue after key press")
+	}
+}
+
+func TestFX15(t *testing.T) {
+	chip := NewChip([]byte{0xF0, 0x15}, testingCycleSleepTime)
+	chip.generalRegisters[0] = 5
+	chip.ExecuteCycle()
+
+	if chip.delayTimerValue != 5 {
+		t.Error("Register to delay timer value failed")
+	}
+}
+
+func TestFX18(t *testing.T) {
+	chip := NewChip([]byte{0xF0, 0x18}, testingCycleSleepTime)
+	chip.generalRegisters[0] = 5
+	chip.ExecuteCycle()
+
+	if chip.soundTimerValue != 5 {
+		t.Error("Register to sound timer value failed")
+	}
+}
+
+func TestFX1E(t *testing.T) {
+	chip := NewChip([]byte{0xF0, 0x1E}, testingCycleSleepTime)
+	chip.indexRegister = 0xFF
+	chip.generalRegisters[0] = 0xFF
+	chip.ExecuteCycle()
+
+	if chip.indexRegister != 510 {
+		t.Error("Index register not added to properly")
+	}
+}
+
+func TestFX29(t *testing.T) {
+	chip := NewChip([]byte{0xF0, 0x29}, testingCycleSleepTime)
+	chip.generalRegisters[0] = 0x2
+	chip.ExecuteCycle()
+
+	if chip.indexRegister != 0x52 {
+		t.Error("Incorrect sprite location was written to index register")
+	}
+}
+
+func TestFX33(t *testing.T) {
+	chip := NewChip([]byte{0xF0, 0x33}, testingCycleSleepTime)
+	chip.generalRegisters[0] = 173
+	chip.indexRegister = 0x202
+	chip.ExecuteCycle()
+
+	if chip.memory[0x202] != 1 || chip.memory[0x202 + 1] != 7 || chip.memory[0x202 + 2] != 3 {
+		t.Error("Incorrect binary-coded decimal representation")
+	}
+}
+
+func TestFX55(t *testing.T) {
+	chip := NewChip([]byte{0xF5, 0x55}, testingCycleSleepTime)
+	for i := range chip.generalRegisters {
+		chip.generalRegisters[i] = 0xDE
+	}
+	chip.indexRegister = 0x202
+	chip.ExecuteCycle()
+
+	if chip.indexRegister != 0x202 {
+		t.Error("index register was modified")
+	}
+
+	for i := 0; i < 6; i++ {
+		if chip.memory[chip.indexRegister + uint16(i)] != 0xDE {
+			t.Error("Error on register dump")
+			break
+		}
+	}
+
+	if chip.memory[chip.indexRegister + 6] != 0x0 {
+		t.Error("Memory location was modified")
+	}
+}
+
+func TestFX65(t *testing.T) {
+	chip := NewChip([]byte{0xF5, 0x65}, testingCycleSleepTime)
+	chip.indexRegister = 0x202
+	for i := 0; i < 6; i++ {
+		chip.memory[chip.indexRegister + uint16(i)] = 0xDE
+	}
+	chip.ExecuteCycle()
+
+	if chip.indexRegister != 0x202 {
+		t.Error("index register was modified")
+	}
+
+	for i := 0; i < 6; i++ {
+		if chip.generalRegisters[i] != 0xDE {
+			t.Error("Error on register load")
+			break
+		}
+	}
+}

@@ -3,15 +3,14 @@ package chip8
 import (
 	"crypto/rand"
 	"encoding/binary"
-	"fmt"
 	"math"
 	"time"
 )
 
 const (
 	flagRegisterIndex       = 15
-	memoryStartIndexForFont = 0x50
-	memoryStartIndexForGame = 0x200
+	memoryStartIndexForFont = uint16(0x50)
+	memoryStartIndexForGame = uint16(0x200)
 	displayWidth            = 64
 	displayHeight           = 32
 )
@@ -119,8 +118,6 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 				panic("Returning from main routine")
 			}
 			chip.programCounter = chip.stack[chip.stackPointer]
-		default:
-			panic(fmt.Sprintf("Cannot recognize instruction: %d", instruction))
 		}
 	case 0x1:
 		chip.programCounter = last12BitsOfInstruction
@@ -248,11 +245,11 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 		key := chip.generalRegisters[secondHexit]
 		switch secondByteOfInstruction {
 		case 0x9E:
-			if keyPressed(key) {
+			if chip.keys[key] {
 				chip.programCounter += 2
 			}
 		case 0xA1:
-			if !keyPressed(key) {
+			if !chip.keys[key] {
 				chip.programCounter += 2
 			}
 		}
@@ -261,7 +258,14 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 		case 0x07:
 			chip.generalRegisters[secondHexit] = chip.delayTimerValue
 		case 0x0A:
-			// wait for key press
+			chip.programCounter -= 2
+			for i, v := range chip.keys {
+				if v {
+					chip.generalRegisters[secondHexit] = byte(i)
+					chip.programCounter += 2
+					break
+				}
+			}
 		case 0x15:
 			chip.delayTimerValue = chip.generalRegisters[secondHexit]
 		case 0x18:
@@ -269,7 +273,9 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 		case 0x1E:
 			chip.indexRegister += uint16(chip.generalRegisters[secondHexit])
 		case 0x29:
-			// something to do with sprites
+			registerValue := chip.generalRegisters[secondHexit]
+			registerValue &= 0xF
+			chip.indexRegister = memoryStartIndexForFont + uint16(registerValue)
 		case 0x33:
 			registerValue := chip.generalRegisters[secondHexit]
 
@@ -313,19 +319,14 @@ func (chip *Chip) DecrementSoundTimer() {
 	}
 }
 
-func keyPressed(key byte) bool {
-	// TODO
-	return true
-}
-
 func (chip *Chip) SetKeys(keyState [16]bool) {
 	chip.keys = keyState
 }
 
 func (chip *Chip) loadGameIntoMemory(fileBytes []byte) {
-	copy(chip.memory[memoryStartIndexForGame:memoryStartIndexForGame+len(fileBytes)], fileBytes)
+	copy(chip.memory[memoryStartIndexForGame:memoryStartIndexForGame+uint16(len(fileBytes))], fileBytes)
 }
 
 func (chip *Chip) loadFontIntoMemory() {
-	copy(chip.memory[memoryStartIndexForFont:memoryStartIndexForFont+len(font)], font[:])
+	copy(chip.memory[memoryStartIndexForFont:memoryStartIndexForFont+uint16(len(font))], font[:])
 }
