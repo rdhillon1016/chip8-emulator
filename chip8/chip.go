@@ -10,8 +10,8 @@ const (
 	flagRegisterIndex       = 15
 	memoryStartIndexForFont = uint16(0x50)
 	memoryStartIndexForGame = uint16(0x200)
-	pixelsWidth            = 64
-	pixelsHeight           = 32
+	pixelsWidth             = 64
+	pixelsHeight            = 32
 )
 
 var font = [80]byte{
@@ -43,7 +43,13 @@ type Chip struct {
 	SoundTimerValue  uint8
 	generalRegisters [16]byte
 	Pixels           [][]bool
-	keys             [16]bool
+	// Needed for the 0xFX0A instruction to indicate whether we're
+	// waiting on some key to be released
+	waitingOnKeyRelease bool
+	// Needed for the 0xFX0A instruction as a comparison to indicate
+	// which keys were formerly pressed and now released
+	previousKeys [16]bool
+	keys         [16]bool
 }
 
 func NewChip(fileBytes []byte) *Chip {
@@ -242,12 +248,19 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 			chip.generalRegisters[secondHexit] = chip.delayTimerValue
 		case 0x0A:
 			chip.programCounter -= 2
-			for i, v := range chip.keys {
-				if v {
-					chip.generalRegisters[secondHexit] = byte(i)
-					chip.programCounter += 2
-					break
+			if !chip.waitingOnKeyRelease {
+				chip.waitingOnKeyRelease = true
+				chip.previousKeys = chip.keys
+			} else {
+				for i, v := range chip.keys {
+					if !v && chip.previousKeys[i] {
+						chip.generalRegisters[secondHexit] = byte(i)
+						chip.programCounter += 2
+						chip.waitingOnKeyRelease = false
+						break
+					}
 				}
+				chip.previousKeys = chip.keys
 			}
 		case 0x15:
 			chip.delayTimerValue = chip.generalRegisters[secondHexit]
@@ -258,7 +271,7 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 		case 0x29:
 			registerValue := chip.generalRegisters[secondHexit]
 			registerValue &= 0xF
-			chip.indexRegister = memoryStartIndexForFont + uint16(registerValue)
+			chip.indexRegister = memoryStartIndexForFont + uint16(registerValue*5)
 		case 0x33:
 			registerValue := chip.generalRegisters[secondHexit]
 
