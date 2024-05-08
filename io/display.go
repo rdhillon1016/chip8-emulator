@@ -8,20 +8,20 @@ import (
 )
 
 const (
-	windowWidth = 1024
+	windowWidth  = 1024
 	windowHeight = 512
 )
 
 type Display struct {
 	Window *pixelgl.Window
-	imd *imdraw.IMDraw
+	imd    *imdraw.IMDraw
 }
 
 func NewDisplay() *Display {
 	cfg := pixelgl.WindowConfig{
 		Title:  "Pixel Rocks!",
 		Bounds: pixel.R(0, 0, windowWidth, windowHeight),
-		VSync: true,
+		VSync:  true,
 	}
 
 	win, err := pixelgl.NewWindow(cfg)
@@ -35,14 +35,14 @@ func NewDisplay() *Display {
 	}
 	return &Display{
 		Window: win,
-		imd: imd,
+		imd:    imd,
 	}
 }
 
 func (display *Display) UpdateScreen(pixels [][]bool) {
 	scaledUpPixelWidth := windowWidth / len(pixels)
 	scaledUpPixelHeight := windowHeight / len(pixels[0])
-	
+
 	display.Window.Clear(colornames.Skyblue)
 	display.imd.Clear()
 
@@ -51,8 +51,8 @@ func (display *Display) UpdateScreen(pixels [][]bool) {
 			if val {
 				// Flip y-index since the drawing starts from lower left
 				y := 32 - j - 1
-				scaledXCoordinateBottomLeft := x*scaledUpPixelWidth
-				scaledYCoordinateBottomLeft := y*scaledUpPixelHeight
+				scaledXCoordinateBottomLeft := x * scaledUpPixelWidth
+				scaledYCoordinateBottomLeft := y * scaledUpPixelHeight
 				scaledXCoordinateTopRight := scaledXCoordinateBottomLeft + scaledUpPixelWidth
 				scaledYCoordinateTopRight := scaledYCoordinateBottomLeft + scaledUpPixelHeight
 				display.imd.Push(pixel.V(float64(scaledXCoordinateBottomLeft), float64(scaledYCoordinateBottomLeft)))

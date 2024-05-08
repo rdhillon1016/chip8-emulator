@@ -271,7 +271,7 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 		case 0x29:
 			registerValue := chip.generalRegisters[secondHexit]
 			registerValue &= 0xF
-			chip.indexRegister = memoryStartIndexForFont + uint16(registerValue * 5)
+			chip.indexRegister = memoryStartIndexForFont + uint16(registerValue*5)
 		case 0x33:
 			registerValue := chip.generalRegisters[secondHexit]
 

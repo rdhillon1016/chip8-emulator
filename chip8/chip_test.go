@@ -349,7 +349,7 @@ func TestDXYNTruncate(t *testing.T) {
 	}
 
 	// Check around it
-	if chip.Pixels[xCord - 1][yCord] || chip.Pixels[xCord][yCord - 1] {
+	if chip.Pixels[xCord-1][yCord] || chip.Pixels[xCord][yCord-1] {
 		t.Error("Pixels were set that shouldn't have been")
 	}
 
@@ -473,7 +473,7 @@ func TestFX33(t *testing.T) {
 	chip.indexRegister = 0x202
 	chip.ExecuteCycle()
 
-	if chip.memory[0x202] != 1 || chip.memory[0x202 + 1] != 7 || chip.memory[0x202 + 2] != 3 {
+	if chip.memory[0x202] != 1 || chip.memory[0x202+1] != 7 || chip.memory[0x202+2] != 3 {
 		t.Error("Incorrect binary-coded decimal representation")
 	}
 }
@@ -491,13 +491,13 @@ func TestFX55(t *testing.T) {
 	}
 
 	for i := 0; i < 6; i++ {
-		if chip.memory[chip.indexRegister + uint16(i)] != 0xDE {
+		if chip.memory[chip.indexRegister+uint16(i)] != 0xDE {
 			t.Error("Error on register dump")
 			break
 		}
 	}
 
-	if chip.memory[chip.indexRegister + 6] != 0x0 {
+	if chip.memory[chip.indexRegister+6] != 0x0 {
 		t.Error("Memory location was modified")
 	}
 }
@@ -506,7 +506,7 @@ func TestFX65(t *testing.T) {
 	chip := NewChip([]byte{0xF5, 0x65})
 	chip.indexRegister = 0x202
 	for i := 0; i < 6; i++ {
-		chip.memory[chip.indexRegister + uint16(i)] = 0xDE
+		chip.memory[chip.indexRegister+uint16(i)] = 0xDE
 	}
 	chip.ExecuteCycle()
 
