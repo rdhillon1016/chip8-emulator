@@ -19,18 +19,18 @@ func TestFetchOutOfBoundsInstruction(t *testing.T) {
 func Test00E0(t *testing.T) {
 	chip := NewChip([]byte{0x00, 0xE0})
 	var expectedDisplay [64][32]bool
-	for i, v := range chip.display {
+	for i, v := range chip.Pixels {
 		for j := range v {
-			chip.display[i][j] = true
+			chip.Pixels[i][j] = true
 			expectedDisplay[i][j] = false
 		}
 	}
 	chip.ExecuteCycle()
 
-	for i, v := range chip.display {
+	for i, v := range chip.Pixels {
 		for j := range v {
-			if chip.display[i][j] != expectedDisplay[i][j] {
-				t.Errorf("Screen didn't clear %t, %t", chip.display[i][j], expectedDisplay[i][j])
+			if chip.Pixels[i][j] != expectedDisplay[i][j] {
+				t.Errorf("Screen didn't clear %t, %t", chip.Pixels[i][j], expectedDisplay[i][j])
 			}
 		}
 	}
@@ -288,7 +288,7 @@ func TestDXYN(t *testing.T) {
 	yCord := byte(4)
 
 	for j := byte(0); j < 5; j++ {
-		chip.display[xCord][yCord+j] = true
+		chip.Pixels[xCord][yCord+j] = true
 	}
 
 	chip.generalRegisters[0] = xCord
@@ -301,10 +301,10 @@ func TestDXYN(t *testing.T) {
 
 	for j := byte(0); j < 5; j++ {
 		for i := byte(0); i < 8; i++ {
-			if i == 7 && !chip.display[xCord+i][yCord+j] {
+			if i == 7 && !chip.Pixels[xCord+i][yCord+j] {
 				t.Error("Draw failed")
 			}
-			if i != 7 && chip.display[xCord+i][yCord+j] {
+			if i != 7 && chip.Pixels[xCord+i][yCord+j] {
 				t.Error("Draw failed")
 			}
 		}
@@ -327,7 +327,7 @@ func TestDXYNWrap(t *testing.T) {
 	chip.ExecuteCycle()
 
 	for xCord := 0; xCord < 8; xCord++ {
-		if !chip.display[xCord][0] {
+		if !chip.Pixels[xCord][0] {
 			t.Error("Draw failed")
 		}
 	}
@@ -344,17 +344,17 @@ func TestDXYNTruncate(t *testing.T) {
 	chip.memory[chip.indexRegister] = 0xFF
 	chip.ExecuteCycle()
 
-	if !chip.display[xCord][yCord] {
+	if !chip.Pixels[xCord][yCord] {
 		t.Error("Draw failed")
 	}
 
 	// Check around it
-	if chip.display[xCord - 1][yCord] || chip.display[xCord][yCord - 1] {
+	if chip.Pixels[xCord - 1][yCord] || chip.Pixels[xCord][yCord - 1] {
 		t.Error("Pixels were set that shouldn't have been")
 	}
 
 	// Make sure it didn't wrap
-	if chip.display[0][0] {
+	if chip.Pixels[0][0] {
 		t.Error("Pixels were set that shouldn't have been")
 	}
 }

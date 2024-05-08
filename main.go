@@ -4,24 +4,28 @@ import (
 	"os"
 	"time"
 
+	"github.com/gopxl/pixel/pixelgl"
 	"github.com/rdhillon1016/chip8-emulator/chip8"
 	"github.com/rdhillon1016/chip8-emulator/io"
 )
 
 const (
-	executionRateHz   = 700
-	timerRateHz       = 60
+	executionRateHz = 700
+	timerRateHz     = 60
 )
 
-func main() {
+func run() {
 	args := os.Args[1:]
 
 	fileBytes, err := os.ReadFile(args[0])
 	if err != nil {
 		panic("Unable to read game file")
 	}
+
+	display := io.NewDisplay()
+
 	chip := chip8.NewChip(fileBytes)
-	
+
 	/* Note that the tickers are unnecessary when their corresponding values
 	are 0, and thus can sometimes be wasteful. However, since they only
 	tick at a rate of 60Hz, this is a fine tradeoff for now. A better
@@ -29,24 +33,31 @@ func main() {
 	delayTicker := time.NewTicker(time.Second / timerRateHz)
 	soundTicker := time.NewTicker(time.Second / timerRateHz)
 
-	for {
-		chip.SetKeys(io.GetKeyPresses())
+	for !display.Window.Closed() {
+		chip.SetKeys(display.GetKeyPresses())
+		var screenUpdated bool
 		select {
 		case <-delayTicker.C:
 			chip.DecrementDelayTimer()
-			chip.ExecuteCycle()
+			screenUpdated = chip.ExecuteCycle()
 		case <-soundTicker.C:
 			chip.DecrementSoundTimer()
-			chip.ExecuteCycle()
+			screenUpdated = chip.ExecuteCycle()
 		default:
+			screenUpdated = chip.ExecuteCycle()
 		}
-		screenUpdated := chip.ExecuteCycle()
 		if screenUpdated {
-			io.UpdateScreen()
+			display.UpdateScreen(chip.Pixels)
+		} else {
+			display.Window.Update()
 		}
 		if chip.SoundTimerValue > 0 {
 			io.Beep()
 		}
 		time.Sleep(time.Second / executionRateHz)
 	}
+}
+
+func main() {
+	pixelgl.Run(run)
 }

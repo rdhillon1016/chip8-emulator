@@ -10,8 +10,8 @@ const (
 	flagRegisterIndex       = 15
 	memoryStartIndexForFont = uint16(0x50)
 	memoryStartIndexForGame = uint16(0x200)
-	displayWidth            = 64
-	displayHeight           = 32
+	pixelsWidth            = 64
+	pixelsHeight           = 32
 )
 
 var font = [80]byte{
@@ -42,13 +42,19 @@ type Chip struct {
 	delayTimerValue  uint8
 	SoundTimerValue  uint8
 	generalRegisters [16]byte
-	display          [displayWidth][displayHeight]bool
+	Pixels           [][]bool
 	keys             [16]bool
 }
 
 func NewChip(fileBytes []byte) *Chip {
+	pixels := make([][]bool, pixelsWidth)
+	for i := range pixels {
+		pixels[i] = make([]bool, pixelsHeight)
+	}
+
 	chip := Chip{
 		programCounter: 0x200,
+		Pixels:         pixels,
 	}
 	chip.loadGameIntoMemory(fileBytes)
 	chip.loadFontIntoMemory()
@@ -83,9 +89,9 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 	case 0x0:
 		switch instruction {
 		case 0x00E0:
-			for i, v := range chip.display {
+			for i, v := range chip.Pixels {
 				for j := range v {
-					chip.display[i][j] = false
+					chip.Pixels[i][j] = false
 				}
 			}
 			screenUpdated = true
@@ -191,20 +197,20 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 		chip.generalRegisters[secondHexit] = secondByteOfInstruction & randomByteSlice[0]
 	case 0xD:
 		height := fourthHexit
-		startingX := chip.generalRegisters[secondHexit] % displayWidth
-		startingY := chip.generalRegisters[thirdHexit] % displayHeight
+		startingX := chip.generalRegisters[secondHexit] % pixelsWidth
+		startingY := chip.generalRegisters[thirdHexit] % pixelsHeight
 		for j := byte(0); j < byte(height); j++ {
 			currByte := chip.memory[chip.indexRegister+uint16(j)]
 			currentY := startingY + j
-			if currentY >= displayHeight {
+			if currentY >= pixelsHeight {
 				break
 			}
 			for i := byte(0); i < 8; i++ {
 				currX := startingX + i
-				if currX >= displayWidth {
+				if currX >= pixelsWidth {
 					break
 				}
-				currPixel := chip.display[currX][currentY]
+				currPixel := chip.Pixels[currX][currentY]
 				var newPixel bool
 				if ((currByte >> (8 - i - 1)) & 1) == 1 {
 					newPixel = true
@@ -214,7 +220,7 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 				if currPixel && newPixel {
 					chip.generalRegisters[flagRegisterIndex] = 1
 				}
-				chip.display[currX][currentY] = currPixel != newPixel
+				chip.Pixels[currX][currentY] = currPixel != newPixel
 			}
 		}
 		screenUpdated = true
