@@ -21,14 +21,6 @@ var keysToIndexMap map[pixelgl.Button]uint = map[pixelgl.Button]uint{
 	pixelgl.KeyV: 0xF,
 }
 
-func (display *Display) EscapePressed() bool {
-	return display.Window.Pressed(pixelgl.KeyEscape)
-}
-
-func (display *Display) ExitClicked() bool {
-	return false
-}
-
 func (display *Display) GetKeyPresses() [16]bool {
 	var keyPresses [16]bool
 	for k, v := range keysToIndexMap {

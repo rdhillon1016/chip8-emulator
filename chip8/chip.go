@@ -145,38 +145,38 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 		case 0x4:
 			registerValueOne := chip.generalRegisters[secondHexit]
 			registerValueTwo := chip.generalRegisters[thirdHexit]
+			chip.generalRegisters[secondHexit] += registerValueTwo
 			if registerValueOne > math.MaxUint8-registerValueTwo {
 				chip.generalRegisters[flagRegisterIndex] = 1
 			} else {
 				chip.generalRegisters[flagRegisterIndex] = 0
 			}
-			chip.generalRegisters[secondHexit] += registerValueTwo
 		case 0x5:
 			registerValueOne := chip.generalRegisters[secondHexit]
 			registerValueTwo := chip.generalRegisters[thirdHexit]
+			chip.generalRegisters[secondHexit] -= registerValueTwo
 			if registerValueOne >= registerValueTwo {
 				chip.generalRegisters[flagRegisterIndex] = 1
 			} else {
 				chip.generalRegisters[flagRegisterIndex] = 0
 			}
-			chip.generalRegisters[secondHexit] -= registerValueTwo
 		case 0x6:
 			registerValue := chip.generalRegisters[secondHexit]
-			chip.generalRegisters[flagRegisterIndex] = registerValue & 0x1
 			chip.generalRegisters[secondHexit] >>= 1
+			chip.generalRegisters[flagRegisterIndex] = registerValue & 0x1
 		case 0x7:
 			registerValueOne := chip.generalRegisters[secondHexit]
 			registerValueTwo := chip.generalRegisters[thirdHexit]
+			chip.generalRegisters[secondHexit] = registerValueTwo - registerValueOne
 			if registerValueTwo >= registerValueOne {
 				chip.generalRegisters[flagRegisterIndex] = 1
 			} else {
 				chip.generalRegisters[flagRegisterIndex] = 0
 			}
-			chip.generalRegisters[secondHexit] = registerValueTwo - registerValueOne
 		case 0xE:
 			registerValue := chip.generalRegisters[secondHexit]
-			chip.generalRegisters[flagRegisterIndex] = registerValue & 0x80
 			chip.generalRegisters[secondHexit] <<= 1
+			chip.generalRegisters[flagRegisterIndex] = registerValue >> 7
 		}
 	case 0x9:
 		registerValueOne := chip.generalRegisters[secondHexit]
