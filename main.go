@@ -49,7 +49,7 @@ func run() {
 		if screenUpdated {
 			display.UpdateScreen(chip.Pixels)
 		} else {
-			display.Window.Update()
+			display.Window.UpdateInput()
 		}
 		if chip.SoundTimerValue > 0 {
 			io.Beep()

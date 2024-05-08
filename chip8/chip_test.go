@@ -414,8 +414,15 @@ func TestFX0A(t *testing.T) {
 	chip.keys[5] = true
 	chip.ExecuteCycle()
 
+	if chip.programCounter == 0x202 {
+		t.Error("Program is not waiting for key release")
+	}
+
+	chip.keys[5] = false
+	chip.ExecuteCycle()
+
 	if chip.programCounter != 0x202 {
-		t.Error("Program did not continue after key press")
+		t.Error("Program did not continue after key release")
 	}
 }
 
