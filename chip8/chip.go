@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"math"
+	"time"
 )
 
 const (
@@ -12,6 +13,7 @@ const (
 	memoryStartIndexForGame = uint16(0x200)
 	pixelsWidth             = 64
 	pixelsHeight            = 32
+	timerRateHz             = 60
 )
 
 var font = [80]byte{
@@ -50,6 +52,8 @@ type Chip struct {
 	// which keys were formerly pressed and now released
 	previousKeys [16]bool
 	keys         [16]bool
+	delayTicker  *time.Ticker
+	soundTicker  *time.Ticker
 }
 
 func NewChip(fileBytes []byte) *Chip {
@@ -61,10 +65,27 @@ func NewChip(fileBytes []byte) *Chip {
 	chip := Chip{
 		programCounter: 0x200,
 		Pixels:         pixels,
+		delayTicker:    time.NewTicker(time.Second / timerRateHz),
+		soundTicker:    time.NewTicker(time.Second / timerRateHz),
 	}
 	chip.loadGameIntoMemory(fileBytes)
 	chip.loadFontIntoMemory()
 	return &chip
+}
+
+func (chip *Chip) RunCycle([bool]) bool {
+	c.SetKeys(d.getKeyPresses())
+		var screenUpdated bool
+		select {
+		case <-c.DelayTicker.C:
+			c.DecrementDelayTimer()
+			screenUpdated = c.ExecuteCycle()
+		case <-c.SoundTicker.C:
+			c.DecrementSoundTimer()
+			screenUpdated = c.ExecuteCycle()
+		default:
+			screenUpdated = vh.Chip.ExecuteCycle()
+		}
 }
 
 func (chip *Chip) ExecuteCycle() bool {
