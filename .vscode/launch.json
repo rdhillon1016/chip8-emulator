@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
-            "args": ["./roms/Pong.ch8"]
+            "args": ["-filePath", "./roms/2-ibm-logo.ch8"],
         }
     ]
 }

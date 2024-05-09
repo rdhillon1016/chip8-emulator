@@ -22,7 +22,7 @@ type display struct {
 
 func newDisplay() *display {
 	cfg := pixelgl.WindowConfig{
-		Title:  "Pixel Rocks!",
+		Title:  "Chip8",
 		Bounds: pixel.R(0, 0, windowWidth, windowHeight),
 		VSync:  true,
 	}
@@ -109,9 +109,7 @@ var keysToIndexMap map[pixelgl.Button]uint = map[pixelgl.Button]uint{
 func (d *display) getKeyPresses() [16]bool {
 	var keyPresses [16]bool
 	for k, v := range keysToIndexMap {
-		if d.window.Pressed(k) {
-			keyPresses[v] = true
-		}
+		keyPresses[v] = d.window.Pressed(k)
 	}
 	return keyPresses
 }
