@@ -1,4 +1,4 @@
-package ebitadapter
+package io
 
 import (
 	"image/color"
@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	windowWidth = 1024
+	windowWidth  = 1024
 	windowHeight = 512
 )
 
@@ -55,7 +55,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	scaledUpPixelWidth := windowWidth / len(pixels)
 	scaledUpPixelHeight := windowHeight / len(pixels[0])
-	pixelImg := ebiten.NewImage(16, 16)
+	pixelImg := ebiten.NewImage(scaledUpPixelWidth, scaledUpPixelHeight)
 	pixelImg.Fill(color.RGBA{0x0b, 0xd3, 0xd3, 0xff})
 
 	imgOptions := &ebiten.DrawImageOptions{}
@@ -67,6 +67,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 			imgOptions.GeoM.Translate(0, float64(scaledUpPixelHeight))
 		}
+		imgOptions.GeoM.Translate(0, -float64(windowHeight))
 		imgOptions.GeoM.Translate(float64(scaledUpPixelWidth), 0)
 	}
 }

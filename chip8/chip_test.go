@@ -151,9 +151,10 @@ func Test8XY0(t *testing.T) {
 func Test8XY1(t *testing.T) {
 	chip := NewChip([]byte{0x80, 0x11})
 	chip.generalRegisters[1] = 0xEE
+	chip.generalRegisters[flagRegisterIndex] = 1
 	chip.ExecuteCycle()
 
-	if chip.generalRegisters[0] != 0xEE {
+	if chip.generalRegisters[0] != 0xEE || chip.generalRegisters[flagRegisterIndex] != 0 {
 		t.Error("Register load failed")
 	}
 }
@@ -161,9 +162,10 @@ func Test8XY1(t *testing.T) {
 func Test8XY2(t *testing.T) {
 	chip := NewChip([]byte{0x80, 0x12})
 	chip.generalRegisters[1] = 0xEE
+	chip.generalRegisters[flagRegisterIndex] = 1
 	chip.ExecuteCycle()
 
-	if chip.generalRegisters[0] != 0x00 {
+	if chip.generalRegisters[0] != 0x00 || chip.generalRegisters[flagRegisterIndex] != 0 {
 		t.Error("Register load failed")
 	}
 }
@@ -171,9 +173,10 @@ func Test8XY2(t *testing.T) {
 func Test8XY3(t *testing.T) {
 	chip := NewChip([]byte{0x80, 0x13})
 	chip.generalRegisters[1] = 0xEE
+	chip.generalRegisters[flagRegisterIndex] = 1
 	chip.ExecuteCycle()
 
-	if chip.generalRegisters[0] != 0xEE {
+	if chip.generalRegisters[0] != 0xEE || chip.generalRegisters[flagRegisterIndex] != 0 {
 		t.Error("Register load failed")
 	}
 }
@@ -212,7 +215,7 @@ func Test8XY5(t *testing.T) {
 
 func Test8XY6(t *testing.T) {
 	chip := NewChip([]byte{0x80, 0x16})
-	chip.generalRegisters[0] = 0x3
+	chip.generalRegisters[1] = 0x3
 	chip.ExecuteCycle()
 
 	if chip.generalRegisters[0] != 0x1 && chip.generalRegisters[flagRegisterIndex] != 1 {
@@ -238,7 +241,7 @@ func Test8XY7(t *testing.T) {
 
 func Test8XYE(t *testing.T) {
 	chip := NewChip([]byte{0x80, 0x1E})
-	chip.generalRegisters[0] = 0x81
+	chip.generalRegisters[1] = 0x81
 	chip.ExecuteCycle()
 
 	if chip.generalRegisters[0] != 0x2 && chip.generalRegisters[flagRegisterIndex] != 1 {
@@ -486,18 +489,18 @@ func TestFX55(t *testing.T) {
 	chip.indexRegister = 0x202
 	chip.ExecuteCycle()
 
-	if chip.indexRegister != 0x202 {
-		t.Error("index register was modified")
+	if chip.indexRegister == 0x202 {
+		t.Error("index register was not modified")
 	}
 
 	for i := 0; i < 6; i++ {
-		if chip.memory[chip.indexRegister+uint16(i)] != 0xDE {
+		if chip.memory[chip.indexRegister-uint16(i)-1] != 0xDE {
 			t.Error("Error on register dump")
 			break
 		}
 	}
 
-	if chip.memory[chip.indexRegister+6] != 0x0 {
+	if chip.memory[chip.indexRegister] != 0x0 {
 		t.Error("Memory location was modified")
 	}
 }
@@ -510,8 +513,8 @@ func TestFX65(t *testing.T) {
 	}
 	chip.ExecuteCycle()
 
-	if chip.indexRegister != 0x202 {
-		t.Error("index register was modified")
+	if chip.indexRegister == 0x202 {
+		t.Error("index register was not modified")
 	}
 
 	for i := 0; i < 6; i++ {

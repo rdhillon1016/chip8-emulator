@@ -161,10 +161,13 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 			chip.generalRegisters[secondHexit] = chip.generalRegisters[thirdHexit]
 		case 0x1:
 			chip.generalRegisters[secondHexit] |= chip.generalRegisters[thirdHexit]
+			chip.generalRegisters[flagRegisterIndex] = 0
 		case 0x2:
 			chip.generalRegisters[secondHexit] &= chip.generalRegisters[thirdHexit]
+			chip.generalRegisters[flagRegisterIndex] = 0
 		case 0x3:
 			chip.generalRegisters[secondHexit] ^= chip.generalRegisters[thirdHexit]
+			chip.generalRegisters[flagRegisterIndex] = 0
 		case 0x4:
 			registerValueOne := chip.generalRegisters[secondHexit]
 			registerValueTwo := chip.generalRegisters[thirdHexit]
@@ -184,8 +187,8 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 				chip.generalRegisters[flagRegisterIndex] = 0
 			}
 		case 0x6:
-			registerValue := chip.generalRegisters[secondHexit]
-			chip.generalRegisters[secondHexit] >>= 1
+			registerValue := chip.generalRegisters[thirdHexit]
+			chip.generalRegisters[secondHexit] = registerValue >> 1
 			chip.generalRegisters[flagRegisterIndex] = registerValue & 0x1
 		case 0x7:
 			registerValueOne := chip.generalRegisters[secondHexit]
@@ -197,8 +200,8 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 				chip.generalRegisters[flagRegisterIndex] = 0
 			}
 		case 0xE:
-			registerValue := chip.generalRegisters[secondHexit]
-			chip.generalRegisters[secondHexit] <<= 1
+			registerValue := chip.generalRegisters[thirdHexit]
+			chip.generalRegisters[secondHexit] = registerValue << 1
 			chip.generalRegisters[flagRegisterIndex] = registerValue >> 7
 		}
 	case 0x9:
@@ -222,6 +225,7 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 		height := fourthHexit
 		startingX := chip.generalRegisters[secondHexit] % pixelsWidth
 		startingY := chip.generalRegisters[thirdHexit] % pixelsHeight
+		chip.generalRegisters[flagRegisterIndex] = 0
 		for j := byte(0); j < byte(height); j++ {
 			currByte := chip.memory[chip.indexRegister+uint16(j)]
 			currentY := startingY + j
@@ -294,7 +298,7 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 
 			hundredsDigit := (registerValue / 100) % 10
 			tensDigit := (registerValue / 10) % 10
-			onesDigit := (registerValue / 1) % 10
+			onesDigit := registerValue % 10
 
 			chip.memory[chip.indexRegister] = hundredsDigit
 			chip.memory[chip.indexRegister+1] = tensDigit
@@ -310,13 +314,15 @@ func (chip *Chip) executeInstruction(instruction uint16) bool {
 
 func (chip *Chip) dumpRegisters(finalRegisterIndex uint16) {
 	for i := 0; i <= int(finalRegisterIndex); i++ {
-		chip.memory[int(chip.indexRegister)+i] = chip.generalRegisters[i]
+		chip.memory[chip.indexRegister] = chip.generalRegisters[i]
+		chip.indexRegister++
 	}
 }
 
 func (chip *Chip) loadRegisters(finalRegisterIndex uint16) {
 	for i := 0; i <= int(finalRegisterIndex); i++ {
-		chip.generalRegisters[i] = chip.memory[int(chip.indexRegister)+i]
+		chip.generalRegisters[i] = chip.memory[chip.indexRegister]
+		chip.indexRegister++
 	}
 }
 
