@@ -1,4 +1,4 @@
-package pixelengine
+package pixeladapter
 
 import (
 	"time"
@@ -6,8 +6,8 @@ import (
 	"github.com/gopxl/pixel"
 	"github.com/gopxl/pixel/imdraw"
 	"github.com/gopxl/pixel/pixelgl"
-	"golang.org/x/image/colornames"
 	"github.com/rdhillon1016/chip8-emulator/chip8"
+	"golang.org/x/image/colornames"
 )
 
 const (
@@ -70,17 +70,21 @@ func (d *display) updateScreen(pixels [][]bool) {
 }
 
 func Run(c *chip8.Chip, executionRateHz int) {
-	d := newDisplay()
 
-	for !d.window.Closed() {
-		
-		if screenUpdated {
-			d.updateScreen(c.Pixels)
-		} else {
-			d.window.UpdateInput()
+	pixelgl.Run(func() {
+		d := newDisplay()
+
+		for !d.window.Closed() {
+			c.SetKeys(d.getKeyPresses())
+			if c.ExecuteCycle() {
+				d.updateScreen(c.Pixels)
+			} else {
+				d.window.UpdateInput()
+			}
+			time.Sleep(time.Second / time.Duration(executionRateHz))
 		}
-		time.Sleep(time.Second / time.Duration(executionRateHz))
-	}
+
+	})
 }
 
 var keysToIndexMap map[pixelgl.Button]uint = map[pixelgl.Button]uint{

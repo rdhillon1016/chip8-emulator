@@ -73,22 +73,18 @@ func NewChip(fileBytes []byte) *Chip {
 	return &chip
 }
 
-func (chip *Chip) RunCycle([bool]) bool {
-	c.SetKeys(d.getKeyPresses())
-		var screenUpdated bool
-		select {
-		case <-c.DelayTicker.C:
-			c.DecrementDelayTimer()
-			screenUpdated = c.ExecuteCycle()
-		case <-c.SoundTicker.C:
-			c.DecrementSoundTimer()
-			screenUpdated = c.ExecuteCycle()
-		default:
-			screenUpdated = vh.Chip.ExecuteCycle()
-		}
-}
-
 func (chip *Chip) ExecuteCycle() bool {
+	/* Note that the tickers are unnecessary when their corresponding values
+	are 0, and thus can sometimes be wasteful. However, since they only
+	tick at a rate of 60Hz, this is a fine tradeoff for now. A better
+	solution may be to pause the ticker when its corresponding value is 0. */
+	select {
+	case <-chip.delayTicker.C:
+		chip.decrementDelayTimer()
+	case <-chip.soundTicker.C:
+		chip.decrementSoundTimer()
+	default:
+	}
 	instruction := chip.fetchInstruction()
 	screenUpdated := chip.executeInstruction(instruction)
 	return screenUpdated
@@ -324,13 +320,13 @@ func (chip *Chip) loadRegisters(finalRegisterIndex uint16) {
 	}
 }
 
-func (chip *Chip) DecrementDelayTimer() {
+func (chip *Chip) decrementDelayTimer() {
 	if chip.delayTimerValue != 0 {
 		chip.delayTimerValue--
 	}
 }
 
-func (chip *Chip) DecrementSoundTimer() {
+func (chip *Chip) decrementSoundTimer() {
 	if chip.SoundTimerValue != 0 {
 		chip.SoundTimerValue--
 	}

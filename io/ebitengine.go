@@ -1,5 +1,0 @@
-package io
-
-func RunWithEbitengine() {
-
-}

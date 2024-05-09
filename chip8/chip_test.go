@@ -462,7 +462,7 @@ func TestFX29(t *testing.T) {
 	chip.generalRegisters[0] = 0x2
 	chip.ExecuteCycle()
 
-	if chip.indexRegister != 0x52 {
+	if chip.indexRegister != 0x5A {
 		t.Error("Incorrect sprite location was written to index register")
 	}
 }
