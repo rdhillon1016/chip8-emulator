@@ -14,6 +14,10 @@ const (
 	timerRateHz     = 60
 )
 
+type Game struct {
+
+}
+
 func run() {
 	args := os.Args[1:]
 
@@ -50,9 +54,6 @@ func run() {
 			display.UpdateScreen(chip.Pixels)
 		} else {
 			display.Window.UpdateInput()
-		}
-		if chip.SoundTimerValue > 0 {
-			io.Beep()
 		}
 		time.Sleep(time.Second / executionRateHz)
 	}
